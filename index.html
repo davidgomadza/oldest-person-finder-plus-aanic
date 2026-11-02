@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oldest Person Finder + Seven Forms–AANIC</title>
+<style>
+  :root{
+    --bg:#0a0c11; --panel:#11151d; --panel-2:#161c26; --line:#232c3a;
+    --text:#e8edf5; --muted:#8b98ad;
+    --accent:#35e0c5; --accent-2:#6ea8fe; --warn:#ffd782;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; color:var(--text); min-height:100vh; padding:26px 18px 70px;
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:
+      radial-gradient(1100px 620px at 12% -12%, #16323a 0%, transparent 60%),
+      radial-gradient(900px 600px at 100% 0%, #1a2340 0%, transparent 55%),
+      var(--bg);
+  }
+  .wrap{max-width:1240px;margin:0 auto}
+  header h1{margin:0 0 4px;font-size:clamp(21px,3vw,30px);letter-spacing:-.02em}
+  header h1 em{font-style:normal;color:var(--accent)}
+  header p{margin:0;color:var(--muted);font-size:13.5px}
+
+  .banner{
+    margin:16px 0 18px; padding:11px 15px; border-radius:12px; font-size:12.5px; line-height:1.55;
+    border:1px solid #3a2f1a; color:#e5cf9f;
+    background:linear-gradient(180deg,rgba(255,196,86,.08),rgba(255,196,86,.025));
+  }
+  .banner b{color:var(--warn)}
+
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .tab{
+    font:inherit;font-size:13.5px;font-weight:650;cursor:pointer;
+    padding:10px 16px;border-radius:11px;color:var(--muted);
+    background:var(--panel-2);border:1px solid var(--line);transition:.18s;
+  }
+  .tab:hover{color:var(--text)}
+  .tab.active{color:#0b1216;background:linear-gradient(180deg,#4ef0d6,#2ec7b0);border-color:#4ef0d6}
+
+  .grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(330px,1fr);gap:16px;align-items:start}
+  @media (max-width:940px){.grid{grid-template-columns:1fr}}
+
+  .card{
+    border:1px solid var(--line);border-radius:var(--radius);
+    background:linear-gradient(180deg,var(--panel),#0c1015);padding:15px;
+  }
+  .card h2{font-size:11.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:0 0 12px;font-weight:750}
+
+  /* buttons */
+  .btn{
+    font:inherit;font-size:13px;font-weight:650;cursor:pointer;padding:9px 14px;
+    border-radius:10px;border:1px solid var(--line);background:var(--panel-2);
+    color:var(--text);transition:.16s;
+  }
+  .btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.primary{background:linear-gradient(180deg,#1b3a3a,#12282a);border-color:#2f6a63;color:#dffcf6}
+  .btn.ghost{background:transparent}
+  .row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+
+  .seg{display:flex;gap:6px;background:#0d1118;border:1px solid var(--line);padding:3px;border-radius:10px}
+  .seg-btn{
+    font:inherit;font-size:12px;font-weight:650;cursor:pointer;padding:6px 11px;border:0;border-radius:8px;
+    background:transparent;color:var(--muted);transition:.15s;
+  }
+  .seg-btn.active{background:#1b2a34;color:var(--accent)}
+
+  .toggle{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);
+    padding:8px 11px;border:1px solid var(--line);border-radius:10px;background:var(--panel-2);cursor:pointer;user-select:none}
+  .toggle input{accent-color:var(--accent);cursor:pointer}
+
+  /* table */
+  .table-wrap{max-height:430px;overflow:auto;border:1px solid var(--line);border-radius:11px;margin-top:12px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  thead th{
+    position:sticky;top:0;background:#0e131a;text-align:left;padding:9px 10px;
+    color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;
+    border-bottom:1px solid var(--line);z-index:1;
+  }
+  tbody td{padding:8px 10px;border-bottom:1px solid #1a212c;vertical-align:top}
+  tbody tr{transition:background .2s}
+  tbody tr.checking{background:rgba(110,168,254,.12)}
+  tbody tr.entrant{background:rgba(53,224,197,.14);box-shadow:inset 3px 0 0 var(--accent)}
+  tbody tr.skipped td{color:#5d6b80}
+  td.idx{color:var(--muted);width:34px}
+  td.nm{font-weight:650}
+  td.age{white-space:nowrap;color:var(--accent-2)}
+  tr.entrant td.age{color:var(--accent)}
+  .flag{font-size:11px;color:var(--muted)}
+
+  /* console */
+  .console{
+    border:1px solid var(--line);border-radius:11px;background:#0a0e14;padding:11px 12px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.8px;line-height:1.65;
+    height:330px;overflow:auto;color:#9fb3c8;
+  }
+  .console .l{animation:fade .25s ease}
+  .console .ok{color:var(--accent)}
+  .console .ent{color:#0b1216;background:var(--accent);border-radius:4px;padding:0 5px;font-weight:700}
+  .console .dim{color:#5d6b80}
+  @keyframes fade{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+
+  .winner{margin-top:12px;border:1px solid rgba(53,224,197,.5);border-radius:12px;padding:14px;
+    background:linear-gradient(180deg,rgba(53,224,197,.11),rgba(53,224,197,.03));animation:fade .3s}
+  .winner .k{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:750}
+  .winner .nm{font-size:19px;font-weight:750;margin:5px 0 3px}
+  .winner .meta{font-size:12.5px;color:#b9c6d6;line-height:1.6}
+  .winner .big{font-size:15px;color:var(--accent);font-weight:700;margin:8px 0}
+  .winner .src{font-size:11px;color:var(--muted);margin-top:8px}
+
+  /* converter */
+  .conv-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:11px;margin-bottom:14px}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .field input,.field select{
+    font:inherit;font-size:13px;padding:8px 10px;border-radius:9px;
+    border:1px solid var(--line);background:#0d1118;color:var(--text);
+  }
+  .field input:focus,.field select:focus{outline:2px solid rgba(53,224,197,.35);border-color:#2f6a63}
+  .field .hint{font-size:10.5px;color:#5d6b80}
+
+  .forms{display:grid;grid-template-columns:repeat(auto-fit,minmax(275px,1fr));gap:12px}
+  .form-card{
+    border:1px solid var(--line);border-radius:12px;padding:13px 14px;
+    background:linear-gradient(180deg,var(--panel-2),#0f141b);
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .form-card.wide{grid-column:1/-1;border-color:rgba(110,168,254,.4)}
+  .form-card .fnum{
+    display:inline-block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--accent);font-weight:800;border:1px solid rgba(53,224,197,.35);
+    background:rgba(53,224,197,.1);padding:2px 7px;border-radius:6px;align-self:flex-start;
+  }
+  .form-card h3{margin:0;font-size:13.5px;font-weight:700}
+  .form-card .out{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.5;
+    color:#dffcf6;background:#0a0e14;border:1px solid #1c2733;border-radius:9px;
+    padding:9px 11px;word-break:break-word;
+  }
+  .form-card .note{font-size:11px;color:var(--muted);line-height:1.5}
+  .form-card .formula{font-size:10.5px;color:#5d6b80;font-family:ui-monospace,monospace;line-height:1.5}
+  .cert{
+    font-family:ui-monospace,monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;
+    background:#0a0e14;border:1px solid #1c2733;border-radius:9px;padding:12px;color:#cfe9e3;
+  }
+  .foot{font-size:11px;color:#5d6b80;margin-top:12px;line-height:1.6}
+  .foot a{color:var(--accent-2)}
+  kbd{font-family:ui-monospace,monospace;font-size:10.5px;border:1px solid var(--line);
+      border-bottom-width:2px;padding:1px 5px;border-radius:5px;color:var(--muted);background:#0d1118}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Oldest Person Finder <em>+ Seven Forms–AANIC</em></h1>
+    <p>Panel ① runs the record loop on real supercentenarian data. Panel ② runs the converter described in the submission.</p>
+  </header>
+
+  <div class="banner">
+    <b>Read this first.</b> Panel ① uses real, published supercentenarian figures — but the oldest living person can change on any day, so verify against the <b>GRG</b>, <b>LongeviQuest</b> or <b>Guinness</b> before citing. Panel ② is a faithful <b>simulation</b> of the methods in the submitted document. Its outputs are not measurements, not predictions, and not a world record.
+  </div>
+
+  <nav class="tabs">
+    <button class="tab active" data-view="finder">① Oldest person — real data</button>
+    <button class="tab" data-view="converter">② Seven Forms–AANIC — converter</button>
+  </nav>
+
+  <!-- ================= VIEW 1 : FINDER ================= -->
+  <section id="view-finder" class="grid">
+
+    <div class="card">
+      <h2>Candidate pool</h2>
+      <div class="seg" id="modeSeg">
+        <button class="seg-btn active" data-mode="all">All-time verified</button>
+        <button class="seg-btn" data-mode="living">Oldest living</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Name</th><th>Born</th><th>Age</th><th>Country</th><th>Status</th></tr>
+          </thead>
+          <tbody id="poolBody"></tbody>
+        </table>
+      </div>
+
+      <div class="row-actions">
+        <button id="runLoop" class="btn primary">▶ Run loop</button>
+        <button id="stepLoop" class="btn">Step</button>
+        <button id="nextEntrant" class="btn">Simulate holder's death → next entrant</button>
+        <button id="resetLoop" class="btn ghost">Reset</button>
+        <label class="toggle"><input type="checkbox" id="fastMode" checked> Fast</label>
+      </div>
+      <div class="foot">
+        Loop rule: walk candidates in descending age order · a strictly greater age becomes the
+        <b>new entrant</b> · when no remaining candidate beats it, the loop halts.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Loop console</h2>
+      <div id="console" class="console"></div>
+      <div id="winner" class="winner" hidden></div>
+    </div>
+
+  </section>
+
+  <!-- ================= VIEW 2 : CONVERTER ================= -->
+  <section id="view-converter" hidden>
+
+    <div class="card" style="margin-bottom:14px">
+      <h2>Subject &amp; parameters</h2>
+      <div class="conv-controls">
+        <div class="field">
+          <label for="personSelect">Load a person (optional)</label>
+          <select id="personSelect"><option value="">— manual entry —</option></select>
+          <span class="hint">Pulls from the panel ① dataset</span>
+        </div>
+        <div class="field">
+          <label for="inName">Name</label>
+          <input id="inName" type="text" value="David Gomadza" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="inBirth">Day of birth</label>
+          <input id="inBirth" type="date" value="1976-06-28">
+        </div>
+        <div class="field">
+          <label for="inDeath">Verified death date (optional)</label>
+          <input id="inDeath" type="date">
+          <span class="hint">Blank → 80 y baseline window</span>
+        </div>
+        <div class="field">
+          <label for="inDose">AGT dosage (k)</label>
+          <input id="inDose" type="number" min="0" max="8000" step="500" value="8000">
+          <span class="hint">Document: 8000 k = AGT8000</span>
+        </div>
+        <div class="field">
+          <label for="inUnits">Core units <span id="unitsVal" style="color:var(--accent)">28</span> / 28</label>
+          <input id="inUnits" type="range" min="0" max="28" step="1" value="28">
+          <span class="hint">Sub-units available: up to 84</span>
+        </div>
+        <div class="field">
+          <label for="inTier">Output tier</label>
+          <select id="inTier">
+            <option value="aanic">AANIC — "…start"</option>
+            <option value="giga">Giga — "gigatothepower…trillion.start"</option>
+            <option value="inf">Infinity — "Tritereetetetllion.start"</option>
+          </select>
+        </div>
+      </div>
+      <div class="row-actions">
+        <button id="convertAll" class="btn primary">⟳ Convert all seven forms</button>
+        <button id="copyCert" class="btn">⧉ Copy certificate</button>
+        <span class="foot" style="margin:0">Shortcuts: <kbd>1</kbd> <kbd>2</kbd> tabs · <kbd>r</kbd> run loop · <kbd>c</kbd> convert</span>
+      </div>
+    </div>
+
+    <div class="forms" id="forms">
+
+      <div class="form-card">
+        <span class="fnum">Form I</span>
+        <h3>Ajaer at birth — day of birth</h3>
+        <div class="out" id="out1">—</div>
+        <div class="note" id="note1">Normalised birth date and age at the reference date.</div>
+        <div class="formula">query: "What is ajaer ajaer day at birth?"</div>
+      </div>
+
+      <div class="form-card">
+        <span class="fnum">Form II</span>
+        <h3>Ajaer ajaer day at birth — calculated death</h3>
+        <div class="out" id="out2">—</div>
+        <div class="note" id="note2">The brain is said to pre-calculate the day of death at birth.</div>
+        <div class="formula">death = birth + baseline lifespan</div>
+      </div>
+
+      <div class="form-card">
+        <span class="fnum">Form III</span>
+        <h3>Ajaer ajaer day now — after AGT</h3>
+        <div class="out" id="out3">—</div>
+        <div class="note" id="note3">Day and month unchanged; the year is rewritten.</div>
+        <div class="formula">year → 7,777,777 at dosage 8000 k</div>
+      </div>
+
+      <div class="form-card">
+        <span class="fnum">Form IV</span>
+        <h3>Ajaer death ajaer — deaths on the body</h3>
+        <div class="out" id="out4">—</div>
+        <div class="note" id="note4">Eight deaths are said to be attached at birth.</div>
+        <div class="formula">deaths = 8 − floor(dosage / 1000)</div>
+      </div>
+
+      <div class="form-card">
+        <span class="fnum">Form V</span>
+        <h3>Longago — survival buffer</h3>
+        <div class="out" id="out5">—</div>
+        <div class="note" id="note5">Standard human longago ≈ 8 seconds.</div>
+        <div class="formula">longago = f(core units)</div>
+      </div>
+
+      <div class="form-card">
+        <span class="fnum">Form VI</span>
+        <h3>Biological age index</h3>
+        <div class="out" id="out6">—</div>
+        <div class="note" id="note6">Negative ageing — reverting past creation coordinates.</div>
+        <div class="formula">index = −(units × 365.2425 + 28) days</div>
+      </div>
+
+      <div class="form-card wide">
+        <span class="fnum">Form VII</span>
+        <h3>Full certificate — all six forms combined</h3>
+        <div class="cert" id="out7">—</div>
+        <div class="note">Simulated output. The seal strings are reproduced from the submitted document for demonstration only.</div>
+      </div>
+
+    </div>
+
+    <div class="foot">
+      Sources for panel ①: Gerontology Research Group — <a href="https://grg.org" target="_blank" rel="noopener">grg.org</a> ·
+      LongeviQuest — <a href="https://longeviquest.com" target="_blank" rel="noopener">longeviquest.com</a> ·
+      Guinness World Records. All-time list is a partial snapshot of verified cases.
+    </div>
+
+  </section>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ============================================================
+   SHARED HELPERS
+   ============================================================ */
+const MONTHS = ['January','February','March','April','May','June','July',
+                'August','September','October','November','December'];
+const DAY = 86400000;
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad2 = n => String(n).padStart(2,'0');
+
+const nowLocal = new Date();
+const TODAY = new Date(Date.UTC(nowLocal.getFullYear(), nowLocal.getMonth(), nowLocal.getDate()));
+
+const parseISO = s => s ? new Date(s + 'T00:00:00Z') : null;
+const fmtDate = d => `${pad2(d.getUTCDate())} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+const fmtISO  = d => `${d.getUTCFullYear()}-${pad2(d.getUTCMonth()+1)}-${pad2(d.getUTCDate())}`;
+const daysBetween = (a,b) => Math.round((b - a) / DAY);
+
+function ageYD(birth, ref){
+  let y = ref.getUTCFullYear() - birth.getUTCFullYear();
+  let anniv = new Date(Date.UTC(ref.getUTCFullYear(), birth.getUTCMonth(), birth.getUTCDate()));
+  if (anniv > ref){
+    y--;
+    anniv = new Date(Date.UTC(ref.getUTCFullYear()-1, birth.getUTCMonth(), birth.getUTCDate()));
+  }
+  const d = Math.max(0, Math.floor((ref - anniv) / DAY));
+  return { y, d, total: Math.floor((ref - birth) / DAY) };
+}
+const ageText = (birth, ref) => {
+  const a = ageYD(birth, ref);
+  return `${a.y} y ${a.d} d`;
+};
+const nf = new Intl.NumberFormat('en-US');
+
+/* ============================================================
+   PANEL ① — DATASET (real, published figures)
+   ============================================================ */
+const ALLTIME = [
+  { name:'Jeanne Calment',        birth:'1875-02-21', death:'1997-08-04', country:'France'  },
+  { name:'Kane Tanaka',           birth:'1903-01-02', death:'2022-04-19', country:'Japan'   },
+  { name:'Sarah Knauss',          birth:'1880-09-24', death:'1999-12-30', country:'USA'     },
+  { name:'Lucile Randon',         birth:'1904-02-11', death:'2023-01-17', country:'France'  },
+  { name:'Nabi Tajima',           birth:'1900-08-04', death:'2018-04-21', country:'Japan'   },
+  { name:'Marie-Louise Meilleur', birth:'1880-08-29', death:'1998-04-16', country:'Canada'  },
+  { name:'Violet Brown',          birth:'1900-03-10', death:'2017-09-15', country:'Jamaica' },
+  { name:'Maria Branyas Morera',  birth:'1907-03-04', death:'2024-08-19', country:'Spain'   },
+  { name:'Emma Morano',           birth:'1899-11-29', death:'2017-04-15', country:'Italy'   },
+  { name:'Chiyo Miyako',          birth:'1901-05-02', death:'2018-07-22', country:'Japan'   },
+  { name:'Ana María Vela Rubio',  birth:'1901-10-29', death:'2017-12-15', country:'Spain'   },
+  { name:'Giuseppina Projetto',   birth:'1902-05-30', death:'2018-07-06', country:'Italy'   }
+];
+
+const LIVING = [
+  { name:'Ethel Caterham',            birth:'1909-08-21', country:'United Kingdom' },
+  { name:'Marie-Rose Tessier',        birth:'1910-05-21', country:'France' },
+  { name:'Naomi Whitehead',           birth:'1910-09-26', country:'USA' },
+  { name:'Lucia Laura Sangenito',     birth:'1910-11-22', country:'Italy' },
+  { name:'Klavdiya Gadyuchkina',      birth:'1910-12-05', country:'Russia' },
+  { name:'Yolanda Beltrão de Azevedo',birth:'1911-01-13', country:'Brazil' },
+  { name:'Andrée Bertoletto',         birth:'1911-01-23', country:'France' },
+  { name:'Miyoko Hiroyasu',           birth:'1911-01-23', country:'Japan' },
+  { name:'Marita Camacho Quirós',     birth:'1911-03-10', country:'Costa Rica' }
+];
+
+/* ---- state ---- */
+const finder = {
+  mode: 'all',
+  pool: [],
+  pointer: 0,
+  best: null,
+  timer: null,
+  running: false,
+  excluded: new Set()
+};
+
+const el = {
+  body: document.getElementById('poolBody'),
+  console: document.getElementById('console'),
+  winner: document.getElementById('winner'),
+  run: document.getElementById('runLoop'),
+  step: document.getElementById('stepLoop'),
+  next: document.getElementById('nextEntrant'),
+  reset: document.getElementById('resetLoop'),
+  fast: document.getElementById('fastMode'),
+  seg: document.getElementById('modeSeg'),
+  personSelect: document.getElementById('personSelect')
+};
+
+function buildPool(){
+  const src = finder.mode === 'all' ? ALLTIME : LIVING;
+  finder.pool = src
+    .map(p => {
+      const b = parseISO(p.birth);
+      const d = p.death ? parseISO(p.death) : TODAY;
+      return {
+        ...p,
+        birthDate: b,
+        deathDate: p.death ? parseISO(p.death) : null,
+        days: daysBetween(b, d),
+        ageText: ageText(b, d)
+      };
+    })
+    .filter(p => !finder.excluded.has(p.name))
+    .sort((a,b) => b.days - a.days);
+
+  finder.pointer = 0;
+  finder.best = null;
+  renderTable();
+  el.winner.hidden = true;
+  el.winner.innerHTML = '';
+}
+
+function renderTable(){
+  el.body.innerHTML = '';
+  finder.pool.forEach((p, i) => {
+    const tr = document.createElement('tr');
+    tr.id = 'row-' + i;
+    tr.innerHTML =
+      `<td class="idx">${i+1}</td>` +
+      `<td class="nm">${esc(p.name)}</td>` +
+      `<td>${p.birth}</td>` +
+      `<td class="age">${p.ageText}</td>` +
+      `<td>${esc(p.country)}</td>` +
+      `<td class="flag">${p.deathDate ? 'deceased' : 'living'}</td>`;
+    el.body.appendChild(tr);
+  });
+}
+
+function logLine(html, cls){
+  const div = document.createElement('div');
+  div.className = 'l ' + (cls || '');
+  div.innerHTML = html;
+  el.console.appendChild(div);
+  el.console.scrollTop = el.console.scrollHeight;
+}
+const clearConsole = () => { el.console.innerHTML = ''; };
+
+function stepOnce(){
+  if (finder.pointer >= finder.pool.length){
+    logLine('— loop halt: no remaining candidate exceeds the holder —', 'dim');
+    return 'done';
+  }
+  const i = finder.pointer;
+  const c = finder.pool[i];
+  const row = document.getElementById('row-' + i);
+  if (row) row.classList.add('checking');
+
+  const out = finder.best === null || c.days > finder.best.days;
+  if (out){
+    finder.best = c;
+    if (row){
+      row.classList.remove('checking');
+      row.classList.add('entrant');
+      const st = row.querySelector('.flag');
+      if (st) st.textContent = 'NEW ENTRANT';
+    }
+    logLine(`#${i+1} ${esc(c.name)} — ${c.ageText} → <span class="ent">NEW ENTRANT</span>`, 'ok');
+    showWinner(c);
+  } else {
+    if (row){ row.classList.remove('checking'); row.classList.add('skipped'); }
+    logLine(`#${i+1} ${esc(c.name)} — ${c.ageText} &lt; ${finder.best.ageText} → skip`, 'dim');
+  }
+
+  finder.pointer++;
+  return finder.pointer >= finder.pool.length ? 'done' : 'more';
+}
+
+function showWinner(p){
+  el.winner.hidden = false;
+  el.winner.innerHTML =
+    `<div class="k">Holder locked</div>` +
+    `<div class="nm">${esc(p.name)}</div>` +
+    `<div class="meta">Born ${p.birth} · ${esc(p.country)} · ${p.deathDate ? 'deceased ' + p.death : 'living'}</div>` +
+    `<div class="big">${p.ageText} &nbsp;(${nf.format(p.days)} days)</div>` +
+    `<div class="src">${finder.mode === 'all'
+        ? 'All-time verified record. The ceiling is Jeanne Calment — 122 y 164 d.'
+        : 'Oldest living snapshot. Verify live status with GRG / LongeviQuest before citing.'}</div>` +
+    `<div class="row-actions"><button class="btn" id="sendToConv">Send to Seven Forms →</button></div>`;
+  const btn = document.getElementById('sendToConv');
+  if (btn) btn.addEventListener('click', () => loadIntoConverter(p));
+}
+
+function startLoop(){
+  if (finder.running) return;
+  finder.running = true;
+  el.run.disabled = true;
+  clearConsole();
+  logLine(`loop.start · mode=${finder.mode} · n=${finder.pool.length}`, 'dim');
+  const delay = el.fast.checked ? 190 : 620;
+
+  finder.timer = setInterval(() => {
+    const r = stepOnce();
+    if (r === 'done'){
+      clearInterval(finder.timer);
+      finder.timer = null;
+      finder.running = false;
+      el.run.disabled = false;
+      logLine('loop.end', 'dim');
+    }
+  }, delay);
+}
+
+function resetLoop(){
+  if (finder.timer) clearInterval(finder.timer);
+  finder.timer = null;
+  finder.running = false;
+  el.run.disabled = false;
+  finder.excluded.clear();
+  buildPool();
+  clearConsole();
+  logLine('reset · pool rebuilt', 'dim');
+}
+
+el.run.addEventListener('click', startLoop);
+
+el.step.addEventListener('click', () => {
+  if (finder.running) return;
+  if (!finder.pool.length) buildPool();
+  stepOnce();
+});
+
+el.next.addEventListener('click', () => {
+  if (finder.running) return;
+  if (finder.best){
+    finder.excluded.add(finder.best.name);
+    logLine(`— holder removed (simulated death) —`, 'dim');
+  }
+  buildPool();
+  logLine(`pool rebuilt · n=${finder.pool.length}`, 'dim');
+  startLoop();
+});
+
+el.reset.addEventListener('click', resetLoop);
+
+el.seg.addEventListener('click', e => {
+  const b = e.target.closest('.seg-btn');
+  if (!b) return;
+  [...el.seg.children].forEach(x => x.classList.toggle('active', x === b));
+  finder.mode = b.dataset.mode;
+  finder.excluded.clear();
+  if (finder.timer) clearInterval(finder.timer);
+  finder.timer = null; finder.running = false; el.run.disabled = false;
+  buildPool();
+  clearConsole();
+  logLine(`mode → ${finder.mode === 'all' ? 'all-time verified' : 'oldest living'}`, 'dim');
+});
+
+/* ============================================================
+   PANEL ② — SEVEN FORMS–AANIC CONVERTER
+   ============================================================ */
+const TIERS = {
+  aanic: 'start',
+  giga:  'gigatothepowergigatothepowergigatothepower…trillion.start',
+  inf:   'Tritereetetetllion.start'
+};
+
+const conv = {
+  name: 'David Gomadza',
+  birth: '1976-06-28',
+  death: '',
+  dose: 8000,
+  units: 28,
+  tier: 'aanic'
+};
+
+const cEl = {
+  name:   document.getElementById('inName'),
+  birth:  document.getElementById('inBirth'),
+  death:  document.getElementById('inDeath'),
+  dose:   document.getElementById('inDose'),
+  units:  document.getElementById('inUnits'),
+  unitsVal: document.getElementById('unitsVal'),
+  tier:   document.getElementById('inTier'),
+  out1: document.getElementById('out1'), note1: document.getElementById('note1'),
+  out2: document.getElementById('out2'), note2: document.getElementById('note2'),
+  out3: document.getElementById('out3'), note3: document.getElementById('note3'),
+  out4: document.getElementById('out4'), note4: document.getElementById('note4'),
+  out5: document.getElementById('out5'), note5: document.getElementById('note5'),
+  out6: document.getElementById('out6'), note6: document.getElementById('note6'),
+  out7: document.getElementById('out7')
+};
+
+let lastCertificate = '';
+
+/* --- the seven form computations --- */
+function computeForms(){
+  const birth = parseISO(conv.birth);
+  if (!birth){
+    cEl.out1.textContent = 'awaiting a valid day of birth…';
+    return;
+  }
+  const deathInput = parseISO(conv.death);
+  const dose = Math.max(0, Math.min(8000, Number(conv.dose) || 0));
+  const units = Math.max(0, Math.min(28, Number(conv.units) || 0));
+  const tier = conv.tier;
+
+  /* Form I — day of birth */
+  const age = ageYD(birth, TODAY);
+  cEl.out1.textContent = `${fmtDate(birth)}  (${fmtISO(birth)})`;
+  cEl.note1.textContent = `Age at ${fmtDate(TODAY)}: ${age.y} y ${age.d} d · ${nf.format(age.total)} days lived.`;
+
+  /* Form II — day of death at birth */
+  const baseDeath = deathInput
+    ? deathInput
+    : new Date(Date.UTC(birth.getUTCFullYear() + 80, birth.getUTCMonth(), birth.getUTCDate()));
+  cEl.out2.textContent = `Ajaer ajaer day at birth = ${fmtDate(baseDeath)}`;
+  cEl.note2.textContent = deathInput
+    ? `Baseline = supplied verified lifespan (${ageYD(birth, deathInput).y} y).`
+    : 'Baseline = 80-year human mortality window (no verified death date supplied).';
+
+  /* Form III — day of death now, after AGT */
+  const TARGET = 7777777;
+  let newYear;
+  if (dose >= 8000) newYear = TARGET;
+  else newYear = Math.round(birth.getUTCFullYear() + (TARGET - birth.getUTCFullYear()) * (dose / 8000));
+  cEl.out3.textContent =
+    `${pad2(birth.getUTCDate())} ${MONTHS[birth.getUTCMonth()]} ${nf.format(newYear)} — ${TIERS[tier]}`;
+  cEl.note3.textContent = dose >= 8000
+    ? 'Dosage ≥ 8000 k: the year is rewritten to 7,777,777. Day and month unchanged.'
+    : `Dosage ${nf.format(dose)} k: year interpolated toward 7,777,777 (document target reached at 8000 k).`;
+
+  /* Form IV — deaths on the body */
+  const removed = Math.min(8, Math.floor(dose / 1000));
+  const deaths = 8 - removed;
+  cEl.out4.textContent = deaths === 0
+    ? 'ajaer death ajaer = 0  → death removed ×8'
+    : `ajaer death ajaer = ${deaths}  (${removed} of 8 removed)`;
+  cEl.note4.textContent = deaths === 0
+    ? 'All eight deaths cleared. Per the document: "the AGT removes death ×8 attached to every human being at birth."'
+    : 'Each 1000 k of dosage clears one of the eight deaths attached at birth.';
+
+  /* Form V — longago survival buffer */
+  let longago;
+  if (units >= 28) longago = '98989898… × infinity';
+  else if (units === 0) longago = '8 s (standard human)';
+  else longago = `8 s × 10^${nf.format(units * 2)}`;
+  cEl.out5.textContent = longago;
+  cEl.note5.textContent = units >= 28
+    ? 'All 28 core units engaged: buffer expanded to infinity.'
+    : `${units} of 28 core units engaged (up to 84 sub-units available).`;
+
+  /* Form VI — biological age index */
+  const negDays = Math.round(units * 365.2425 + 28);
+  if (units >= 28){
+    cEl.out6.textContent = '−minus Jejuejue.start';
+    cEl.note6.textContent = `Document-style output at full units. Numeric equivalent: −${nf.format(negDays)} days (−${(negDays/365.2425).toFixed(2)} y) — i.e. ${28} days before the creation coordinate.`;
+  } else {
+    cEl.out6.textContent = `−${nf.format(negDays)} days (−${(negDays/365.2425).toFixed(2)} y)`;
+    cEl.note6.textContent = `Negative ageing: ${nf.format(negDays)} days reverted past the birth coordinate.`;
+  }
+
+  /* Form VII — certificate */
+  const recordYears = deathInput ? ageYD(birth, deathInput).y : age.y;
+  const extended = TARGET + recordYears;
+  lastCertificate =
+`════════ SEVEN FORMS–AANIC · CERTIFICATE (SIMULATED) ════════
+Subject            : ${conv.name || '(unnamed)'}
+Form I   day of birth        : ${fmtDate(birth)}
+Form II  ajaer at birth      : ${fmtDate(baseDeath)}
+Form III ajaer now (AGT)     : ${pad2(birth.getUTCDate())} ${MONTHS[birth.getUTCMonth()]} ${nf.format(newYear)}
+Form IV  deaths on body      : ${deaths}
+Form V   longago             : ${longago}
+Form VI  biological index    : ${units >= 28 ? '−minus Jejuejue.start' : '−' + nf.format(negDays) + ' days'}
+Dosage                       : AGT${nf.format(dose)} k · units ${units}/28
+Extended lifespan (sim.)     : 7,777,777 + ${recordYears} y = ${nf.format(extended)} y
+Tier string                  : ${TIERS[tier]}
+Certification status         : AETERT / COMPLETEATERTX23ERT (simulated)
+Seal                         : sealofapprovals7628396t' / sealofapprovals7628377t'
+─────────────────────────────────────────────────────────────
+NOT A MEASUREMENT. NOT A PREDICTION. NOT A WORLD RECORD.
+Generated by a demonstration converter from the submitted document.`;
+
+  cEl.out7.textContent = lastCertificate;
+}
+
+/* --- wiring --- */
+function syncFromInputs(){
+  conv.name  = cEl.name.value;
+  conv.birth = cEl.birth.value;
+  conv.death = cEl.death.value;
+  conv.dose  = cEl.dose.value;
+  conv.units = cEl.units.value;
+  conv.tier  = cEl.tier.value;
+  cEl.unitsVal.textContent = conv.units;
+  computeForms();
+}
+
+[cEl.name, cEl.birth, cEl.death, cEl.dose, cEl.units, cEl.tier].forEach(inp => {
+  inp.addEventListener('input', syncFromInputs);
+  inp.addEventListener('change', syncFromInputs);
+});
+
+document.getElementById('convertAll').addEventListener('click', () => {
+  syncFromInputs();
+  cEl.out7.scrollIntoView({ behavior:'smooth', block:'center' });
+});
+
+document.getElementById('copyCert').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(lastCertificate);
+    const b = document.getElementById('copyCert');
+    const t = b.textContent;
+    b.textContent = '✓ Copied';
+    setTimeout(() => { b.textContent = t; }, 1400);
+  } catch (e) { /* clipboard unavailable */ }
+});
+
+/* --- person loader --- */
+function populateSelect(){
+  const all = ALLTIME.concat(LIVING);
+  el.personSelect.innerHTML = '<option value="">— manual entry —</option>' +
+    all.map((p, i) => `<option value="${i}">${esc(p.name)} — born ${p.birth}</option>`).join('');
+}
+
+function loadIntoConverter(p){
+  conv.name  = p.name;
+  conv.birth = p.birth;
+  conv.death = p.death || '';
+  cEl.name.value  = conv.name;
+  cEl.birth.value = conv.birth;
+  cEl.death.value = conv.death;
+  syncFromInputs();
+  switchView('converter');
+  document.getElementById('view-converter').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+el.personSelect.addEventListener('change', e => {
+  const v = e.target.value;
+  if (v === '') return;
+  const p = ALLTIME.concat(LIVING)[Number(v)];
+  if (p) loadIntoConverter(p);
+});
+
+/* ============================================================
+   VIEW SWITCHING + KEYBOARD
+   ============================================================ */
+const tabs = [...document.querySelectorAll('.tab')];
+const views = {
+  finder: document.getElementById('view-finder'),
+  converter: document.getElementById('view-converter')
+};
+
+function switchView(name){
+  tabs.forEach(t => t.classList.toggle('active', t.dataset.view === name));
+  Object.entries(views).forEach(([k, v]) => { v.hidden = k !== name; });
+}
+tabs.forEach(t => t.addEventListener('click', () => switchView(t.dataset.view)));
+
+window.addEventListener('keydown', e => {
+  if (e.target.matches('input, select, textarea')) return;
+  if (e.key === '1'){ switchView('finder'); }
+  if (e.key === '2'){ switchView('converter'); }
+  if (e.key.toLowerCase() === 'r'){ switchView('finder'); startLoop(); }
+  if (e.key.toLowerCase() === 'c'){ switchView('converter'); syncFromInputs(); }
+});
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+populateSelect();
+buildPool();
+logLine('ready · press "Run loop" to start · the loop halts when no candidate beats the holder', 'dim');
+syncFromInputs();
+
+})();
+</script>
+</body>
+</html>
